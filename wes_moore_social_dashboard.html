@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Moore Campaign — Social Command Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --surface3: #1e2330;
+    --border: #252b38;
+    --border2: #2e3547;
+    --accent: #4f7fff;
+    --accent2: #7c5cfc;
+    --gold: #e8b84b;
+    --red: #ff4f6a;
+    --green: #2dd4a0;
+    --orange: #ff8c42;
+    --text: #e8eaf0;
+    --text2: #8892a4;
+    --text3: #4e5970;
+    --fb: #1877f2;
+    --ig: #e1306c;
+    --x: #e7e9ea;
+    --yt: #ff0000;
+    --tt: #69c9d0;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* PASSWORD GATE */
+  #gate {
+    position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999;
+    background-image: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(79,127,255,0.12) 0%, transparent 70%);
+  }
+  .gate-box { text-align: center; max-width: 380px; width: 90%; }
+  .gate-logo { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text2); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 2.5rem; }
+  .gate-title { font-family: 'DM Serif Display', serif; font-size: 2.4rem; color: var(--text); line-height: 1.15; margin-bottom: 0.5rem; }
+  .gate-sub { color: var(--text2); font-size: 0.88rem; margin-bottom: 2.5rem; }
+  .gate-input-wrap { position: relative; margin-bottom: 1rem; }
+  .gate-input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-family: 'DM Mono', monospace; font-size: 1rem; padding: 14px 18px; border-radius: var(--radius); outline: none; letter-spacing: 0.08em; transition: border-color 0.2s; }
+  .gate-input:focus { border-color: var(--accent); }
+  .gate-btn { width: 100%; background: var(--accent); color: #fff; border: none; padding: 14px; border-radius: var(--radius); font-family: 'Instrument Sans', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; letter-spacing: 0.04em; transition: opacity 0.2s, transform 0.15s; }
+  .gate-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .gate-error { color: var(--red); font-size: 0.8rem; margin-top: 0.6rem; height: 1rem; }
+  .gate-hint { color: var(--text3); font-size: 0.75rem; margin-top: 1.5rem; }
+
+  /* MAIN APP */
+  #app { display: none; min-height: 100vh; }
+  
+  /* HEADER */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,12,16,0.85); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 58px;
+  }
+  .header-left { display: flex; align-items: center; gap: 1.5rem; }
+  .header-logo { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text); }
+  .header-logo span { color: var(--accent); }
+  .header-badge { background: var(--surface2); border: 1px solid var(--border2); color: var(--text2); font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.06em; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .alert-bell { position: relative; background: var(--surface2); border: 1px solid var(--border2); width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s; }
+  .alert-bell:hover { border-color: var(--accent); }
+  .alert-bell svg { width: 16px; height: 16px; stroke: var(--text2); }
+  .alert-dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; background: var(--red); border-radius: 50%; border: 1.5px solid var(--bg); }
+  .live-chip { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--green); font-weight: 600; letter-spacing: 0.06em; }
+  .live-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  /* TABS */
+  .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg); padding: 0 2rem; position: sticky; top: 58px; z-index: 99; }
+  .tab { padding: 14px 22px; font-size: 0.82rem; font-weight: 600; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; letter-spacing: 0.04em; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab-icon { margin-right: 6px; }
+
+  /* LAYOUT */
+  .page { display: none; padding: 2rem; max-width: 1400px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* FILTER BAR */
+  .filter-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+  .filter-label { font-size: 0.75rem; color: var(--text3); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.25rem; }
+  .filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-size: 0.75rem; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.15s; font-family: inherit; }
+  .filter-btn:hover { border-color: var(--border2); color: var(--text); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .filter-divider { width: 1px; background: var(--border); height: 28px; margin: 0 0.25rem; }
+
+  /* STAT CARDS */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.3s; }
+  .stat-card:hover::before { opacity: 1; }
+  .stat-platform { display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem; }
+  .platform-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+  .stat-label { font-size: 0.72rem; color: var(--text3); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .stat-value { font-family: 'DM Mono', monospace; font-size: 1.9rem; font-weight: 500; color: var(--text); line-height: 1; margin-bottom: 0.4rem; }
+  .stat-change { font-size: 0.75rem; font-weight: 600; }
+  .stat-change.up { color: var(--green); }
+  .stat-change.down { color: var(--red); }
+
+  /* CHARTS */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
+  .chart-title { font-size: 0.85rem; font-weight: 700; color: var(--text); letter-spacing: 0.02em; }
+  .chart-subtitle { font-size: 0.72rem; color: var(--text3); margin-top: 2px; }
+  .chart-canvas-wrap { position: relative; height: 230px; }
+
+  /* TABLES */
+  .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 1rem; overflow: hidden; }
+  .table-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .table-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+  .table-sub { font-size: 0.72rem; color: var(--text3); margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 10px 1.5rem; text-align: left; font-size: 0.68rem; font-weight: 700; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 12px 1.5rem; font-size: 0.82rem; color: var(--text2); vertical-align: middle; }
+  tbody td.strong { color: var(--text); font-weight: 600; }
+  .platform-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 5px; }
+  .platform-tag.fb { background: rgba(24,119,242,0.15); color: var(--fb); }
+  .platform-tag.ig { background: rgba(225,48,108,0.15); color: var(--ig); }
+  .platform-tag.x  { background: rgba(231,233,234,0.1); color: var(--x); }
+  .platform-tag.yt { background: rgba(255,0,0,0.15); color: var(--yt); }
+  .platform-tag.tt { background: rgba(105,201,208,0.15); color: var(--tt); }
+  .engagement-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .engagement-bar { height: 5px; border-radius: 3px; background: var(--accent); min-width: 4px; transition: width 0.3s; }
+  .handle-chip { font-family: 'DM Mono', monospace; font-size: 0.72rem; background: var(--surface3); border: 1px solid var(--border2); padding: 2px 8px; border-radius: 4px; color: var(--text2); }
+  .partisan-tag { font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+  .partisan-tag.left { background: rgba(79,127,255,0.15); color: var(--accent); }
+  .partisan-tag.right { background: rgba(255,79,106,0.15); color: var(--red); }
+  .partisan-tag.center { background: rgba(232,184,75,0.15); color: var(--gold); }
+  .partisan-tag.unknown { background: var(--surface3); color: var(--text3); }
+  .breakout-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.68rem; font-weight: 700; color: var(--orange); background: rgba(255,140,66,0.12); border: 1px solid rgba(255,140,66,0.25); padding: 2px 8px; border-radius: 4px; }
+  .breakout-badge svg { width: 10px; height: 10px; fill: var(--orange); }
+
+  /* COMPETITOR INPUT */
+  .competitor-input-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+  .competitor-input-bar label { font-size: 0.75rem; font-weight: 700; color: var(--text2); letter-spacing: 0.04em; white-space: nowrap; }
+  .handle-input { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.82rem; padding: 8px 12px; border-radius: 7px; outline: none; flex: 1; min-width: 180px; transition: border-color 0.2s; }
+  .handle-input:focus { border-color: var(--accent); }
+  .add-btn { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 7px; font-family: 'Instrument Sans', sans-serif; font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity 0.2s; }
+  .add-btn:hover { opacity: 0.85; }
+  .competitor-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 0.75rem; }
+  .competitor-chip { background: var(--surface3); border: 1px solid var(--border2); color: var(--text2); font-family: 'DM Mono', monospace; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
+  .competitor-chip button { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+  .competitor-chip button:hover { color: var(--red); }
+
+  /* ALERT PANEL */
+  .alert-panel { position: fixed; top: 58px; right: 0; width: 360px; height: calc(100vh - 58px); background: var(--surface); border-left: 1px solid var(--border); z-index: 200; transform: translateX(100%); transition: transform 0.3s ease; overflow-y: auto; }
+  .alert-panel.open { transform: translateX(0); }
+  .alert-panel-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); }
+  .alert-panel-title { font-size: 0.9rem; font-weight: 700; }
+  .close-alerts { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1.2rem; }
+  .alert-item { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .alert-item:hover { background: var(--surface2); }
+  .alert-item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .alert-item-platform { font-size: 0.7rem; font-weight: 700; }
+  .alert-item-time { font-size: 0.68rem; color: var(--text3); }
+  .alert-item-text { font-size: 0.8rem; color: var(--text2); line-height: 1.45; }
+  .alert-item-metric { font-size: 0.72rem; color: var(--orange); font-weight: 600; margin-top: 4px; }
+  .alert-setup { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .alert-setup-label { font-size: 0.72rem; font-weight: 700; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .alert-form { display: flex; flex-direction: column; gap: 0.6rem; }
+  .alert-form input, .alert-form select { background: var(--surface); border: 1px solid var(--border2); color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.78rem; padding: 7px 10px; border-radius: 7px; outline: none; width: 100%; }
+  .alert-form input:focus, .alert-form select:focus { border-color: var(--accent); }
+  .alert-form button { background: var(--accent); color: #fff; border: none; padding: 8px; border-radius: 7px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 0.8rem; }
+  .notify-toggle { display: flex; align-items: center; gap: 10px; padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--border); }
+  .toggle-label { font-size: 0.78rem; color: var(--text2); flex: 1; }
+  .toggle { position: relative; width: 38px; height: 20px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--surface3); border-radius: 20px; cursor: pointer; transition: background 0.2s; }
+  .toggle-slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: var(--text3); border-radius: 50%; transition: transform 0.2s, background 0.2s; }
+  .toggle input:checked + .toggle-slider { background: var(--accent); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(18px); background: #fff; }
+
+  /* SECTION HEADINGS */
+  .section-label { font-size: 0.68rem; font-weight: 700; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; margin-top: 1.5rem; display: flex; align-items: center; gap: 8px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* EMPTY */
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text3); }
+  .empty-state svg { width: 40px; height: 40px; margin-bottom: 1rem; stroke: var(--text3); }
+  .empty-state p { font-size: 0.85rem; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .charts-grid { grid-template-columns: 1fr; }
+    header { padding: 0 1rem; }
+    .tab-bar { padding: 0 1rem; overflow-x: auto; }
+    .page { padding: 1rem; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+  
+  /* TOOLTIP custom */
+  .tooltip-badge { background: var(--surface3); border: 1px solid var(--border2); color: var(--text2); font-size: 0.68rem; padding: 2px 7px; border-radius: 4px; }
+
+  .page-intro { color: var(--text3); font-size: 0.82rem; line-height: 1.6; margin-bottom: 1.5rem; max-width: 700px; }
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">Moore Campaign HQ</div>
+    <div class="gate-title">Social Command<br/>Center</div>
+    <div class="gate-sub">Restricted access. Authorized personnel only.</div>
+    <div class="gate-input-wrap">
+      <input class="gate-input" id="pwInput" type="password" placeholder="Enter access code" autocomplete="off"/>
+    </div>
+    <button class="gate-btn" onclick="checkPassword()">Authenticate →</button>
+    <div class="gate-error" id="gateError"></div>
+    <div class="gate-hint">Demo password: <strong style="color:var(--text2);font-family:'DM Mono',monospace;">moore2026</strong></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="header-logo">Moore <span>Command</span></div>
+    <div class="header-badge">INTERNAL</div>
+  </div>
+  <div class="header-right">
+    <div class="live-chip"><div class="live-dot"></div> LIVE</div>
+    <div class="alert-bell" onclick="toggleAlerts()" title="Breakout Alerts">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div class="alert-dot"></div>
+    </div>
+  </div>
+</header>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab(0)"><span class="tab-icon">📊</span>Own Performance</div>
+  <div class="tab" onclick="switchTab(1)"><span class="tab-icon">🔍</span>Social Listening</div>
+  <div class="tab" onclick="switchTab(2)"><span class="tab-icon">⚔️</span>Competitive Analysis</div>
+</div>
+
+<!-- ───────────────────── TAB 1: OWN PERFORMANCE ───────────────────── -->
+<div class="page active" id="page0">
+  <p class="page-intro">Track engagement, follower growth, and top posts across <strong>@govwesmoore</strong> and <strong>@iamwesmoore</strong>.</p>
+
+  <div class="filter-bar">
+    <span class="filter-label">Period</span>
+    <div class="filter-group" id="periodFilter0">
+      <button class="filter-btn" onclick="setFilter('period0','24h',this)">24h</button>
+      <button class="filter-btn active" onclick="setFilter('period0','week',this)">Week</button>
+      <button class="filter-btn" onclick="setFilter('period0','month',this)">Month</button>
+      <button class="filter-btn" onclick="setFilter('period0','year',this)">Year</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Handle</span>
+    <div class="filter-group" id="handleFilter0">
+      <button class="filter-btn active" onclick="setFilter('handle0','all',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('handle0','gov',this)">@govwesmoore</button>
+      <button class="filter-btn" onclick="setFilter('handle0','iam',this)">@iamwesmoore</button>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stats-row" id="statsRow0"></div>
+
+  <!-- CHARTS -->
+  <div class="section-label">Engagement Overview</div>
+  <div class="charts-grid">
+    <div class="chart-card full">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Total Engagement Rate by Platform</div>
+          <div class="chart-subtitle">(Likes + Comments) ÷ Followers &nbsp;·&nbsp; Video: Views ÷ Followers</div>
+        </div>
+        <div class="tooltip-badge">% rate</div>
+      </div>
+      <div class="chart-canvas-wrap"><canvas id="engagementChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Follower Growth</div>
+          <div class="chart-subtitle">Net new followers over time</div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap"><canvas id="followerChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Engagement by Content Type</div>
+          <div class="chart-subtitle">Text vs. Video performance split</div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap"><canvas id="contentTypeChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- BEST POSTS TABLE -->
+  <div class="section-label">Top Posts by Engagement</div>
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <div class="table-title">Best Performing Posts</div>
+        <div class="table-sub">Ranked by engagement rate across all platforms</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="bestPostsTable">
+        <thead><tr>
+          <th>Platform</th><th>Handle</th><th>Post Preview</th>
+          <th>Likes</th><th>Comments</th><th>Views</th>
+          <th>Eng. Rate</th><th>Date</th><th>Status</th>
+        </tr></thead>
+        <tbody id="bestPostsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────────────── TAB 2: SOCIAL LISTENING ───────────────────── -->
+<div class="page" id="page1">
+  <p class="page-intro">Mentions of <strong>Wes Moore</strong>, <strong>Governor Moore</strong>, or <strong>Moore</strong> across Facebook, Instagram, X, YouTube, and TikTok — from accounts <em>other than</em> @govwesmoore and @iamwesmoore.</p>
+
+  <div class="filter-bar">
+    <span class="filter-label">Period</span>
+    <div class="filter-group">
+      <button class="filter-btn" onclick="setFilter('period1','24h',this)">24h</button>
+      <button class="filter-btn active" onclick="setFilter('period1','week',this)">Week</button>
+      <button class="filter-btn" onclick="setFilter('period1','month',this)">Month</button>
+      <button class="filter-btn" onclick="setFilter('period1','year',this)">Year</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Partisan Lean</span>
+    <div class="filter-group" id="partisanFilter">
+      <button class="filter-btn active" onclick="setPartisan('all',this)">All</button>
+      <button class="filter-btn" onclick="setPartisan('left',this)">Left</button>
+      <button class="filter-btn" onclick="setPartisan('center',this)">Center</button>
+      <button class="filter-btn" onclick="setPartisan('right',this)">Right</button>
+      <button class="filter-btn" onclick="setPartisan('unknown',this)">Unknown</button>
+    </div>
+  </div>
+
+  <div class="section-label">Highest Engagement Mentions</div>
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <div class="table-title">Mentions by Engagement</div>
+        <div class="table-sub">Sorted highest → lowest engagement rate</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr>
+          <th>Platform</th><th>Account</th><th>Post Preview</th>
+          <th>Likes</th><th>Comments</th><th>Views</th>
+          <th>Eng. Rate</th><th>Partisan Lean</th>
+        </tr></thead>
+        <tbody id="mentionsByEngBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-label">Most Recent Mentions</div>
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <div class="table-title">Mentions by Recency</div>
+        <div class="table-sub" id="partisanSubLabel">Filtered by partisan lean · newest first</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr>
+          <th>Platform</th><th>Account</th><th>Post Preview</th>
+          <th>Eng. Rate</th><th>Partisan Lean</th><th>Sentiment</th><th>Date</th>
+        </tr></thead>
+        <tbody id="mentionsByDateBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────────────── TAB 3: COMPETITIVE ANALYSIS ───────────────────── -->
+<div class="page" id="page2">
+  <p class="page-intro">Compare @govwesmoore and @iamwesmoore performance against competitor accounts. Add handles below.</p>
+
+  <div class="competitor-input-bar" id="competitorInputBar">
+    <label>Add Competitor Handle</label>
+    <input class="handle-input" id="competitorInput" type="text" placeholder="@handle" onkeydown="if(event.key==='Enter')addCompetitor()"/>
+    <button class="add-btn" onclick="addCompetitor()">+ Add</button>
+    <div style="width:100%;"><div class="competitor-chips" id="competitorChips"></div></div>
+  </div>
+
+  <div class="filter-bar">
+    <span class="filter-label">Period</span>
+    <div class="filter-group">
+      <button class="filter-btn" onclick="setFilter('period2','24h',this)">24h</button>
+      <button class="filter-btn active" onclick="setFilter('period2','week',this)">Week</button>
+      <button class="filter-btn" onclick="setFilter('period2','month',this)">Month</button>
+      <button class="filter-btn" onclick="setFilter('period2','year',this)">Year</button>
+    </div>
+  </div>
+
+  <div class="section-label">Follower Growth Comparison</div>
+  <div class="chart-card" style="margin-bottom:1rem;">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Follower Growth — Moore vs. Competitors</div>
+        <div class="chart-subtitle">Net new followers over selected period</div>
+      </div>
+    </div>
+    <div class="chart-canvas-wrap" style="height:280px;"><canvas id="compFollowerChart"></canvas></div>
+  </div>
+
+  <div class="section-label">Breakout Competitor Posts</div>
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <div class="table-title">Competitor Breakout Posts</div>
+        <div class="table-sub">Posts gaining traction significantly faster than their average</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr>
+          <th>Platform</th><th>Handle</th><th>Post Preview</th>
+          <th>Eng. Rate</th><th>vs. Avg</th><th>Velocity</th><th>Date</th>
+        </tr></thead>
+        <tbody id="compBreakoutBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-label">Top Competitor Posts</div>
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <div class="table-title">Competitor Top Posts</div>
+        <div class="table-sub">Highest engagement posts from tracked competitor accounts</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr>
+          <th>Platform</th><th>Handle</th><th>Post Preview</th>
+          <th>Likes</th><th>Comments</th><th>Views</th><th>Eng. Rate</th><th>Date</th>
+        </tr></thead>
+        <tbody id="compTopBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- end #app -->
+
+<!-- ALERT PANEL -->
+<div class="alert-panel" id="alertPanel">
+  <div class="alert-panel-header">
+    <div class="alert-panel-title">⚡ Breakout Alerts</div>
+    <button class="close-alerts" onclick="toggleAlerts()">✕</button>
+  </div>
+  <div class="alert-setup">
+    <div class="alert-setup-label">Configure Notifications</div>
+    <div class="alert-form">
+      <input type="email" placeholder="Notify email (e.g. team@moore.gov)" id="alertEmail"/>
+      <select id="alertThreshold">
+        <option value="2x">Alert when engagement 2× avg</option>
+        <option value="5x" selected>Alert when engagement 5× avg</option>
+        <option value="10x">Alert when engagement 10× avg</option>
+      </select>
+      <select id="alertScope">
+        <option value="all">All accounts (own + competitors)</option>
+        <option value="own">Own accounts only</option>
+        <option value="comp">Competitors only</option>
+      </select>
+      <button onclick="saveAlertConfig()">Save Notification Settings</button>
+    </div>
+  </div>
+  <div class="notify-toggle">
+    <span class="toggle-label">Push notifications (browser)</span>
+    <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+  </div>
+  <div class="notify-toggle">
+    <span class="toggle-label">Email digests (daily)</span>
+    <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+  </div>
+  <div id="alertList"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  PASSWORD
+// ═══════════════════════════════════════════════
+const CORRECT_PASSWORD = 'moore2026';
+document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key==='Enter') checkPassword(); });
+function checkPassword(){
+  const v = document.getElementById('pwInput').value.trim();
+  if(v === CORRECT_PASSWORD){
+    document.getElementById('gate').style.display='none';
+    document.getElementById('app').style.display='block';
+    initDashboard();
+  } else {
+    const el = document.getElementById('gateError');
+    el.textContent = 'Incorrect access code. Try again.';
+    document.getElementById('pwInput').value='';
+    setTimeout(()=>el.textContent='', 3000);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+const state = {
+  period0:'week', handle0:'all',
+  period1:'week', partisan:'all',
+  period2:'week',
+  competitors: ['@larryhogan','@brandanarundel'],
+  alertPanelOpen: false
+};
+
+const PLATFORMS = ['Facebook','Instagram','X','YouTube','TikTok'];
+const PCOLORS = { Facebook:'#1877f2', Instagram:'#e1306c', X:'#e7e9ea', YouTube:'#ff0000', TikTok:'#69c9d0' };
+const PCLS = { Facebook:'fb', Instagram:'ig', X:'x', YouTube:'yt', TikTok:'tt' };
+
+// ═══════════════════════════════════════════════
+//  SEED DATA GENERATOR
+// ═══════════════════════════════════════════════
+function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function fmtN(n){ if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1e3) return (n/1e3).toFixed(1)+'K'; return n; }
+function fmtPct(n){ return (n*100).toFixed(2)+'%'; }
+function daysAgo(d){ const dt=new Date(); dt.setDate(dt.getDate()-d); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}); }
+
+// Platform followers per handle
+const FOLLOWERS = {
+  '@govwesmoore':{ Facebook:420000, Instagram:310000, X:285000, YouTube:95000, TikTok:187000 },
+  '@iamwesmoore':{ Facebook:188000, Instagram:249000, X:204000, YouTube:61000, TikTok:320000 }
+};
+
+const POST_SAMPLES = {
+  Facebook:["Proud to sign HB 1111 into law today — expanding broadband to every corner of Maryland.","We're investing in Maryland's future. Here's what our latest budget means for families.","Honored to welcome @POTUS to Annapolis this week."],
+  Instagram:["📸 Behind the scenes at today's ribbon cutting in Baltimore.","Black business owners in Maryland are building something real. We're here to support them. 🙌","Our commitment to education reform is unwavering. Here's the progress."],
+  X:["Just signed an executive order directing state agencies to reduce emissions 45% by 2030.","Maryland families deserve relief. We delivered.","Grateful for the warm welcome in Prince George's County today."],
+  YouTube:["Governor Moore Full Address: Investing in Maryland's Future","Wes Moore Interview: Education, Housing & the Economy Explained","Official: Governor Moore Signs Criminal Justice Reform Package"],
+  TikTok:["POV: You're the Governor of Maryland and you just signed the biggest climate bill in state history 🌱","Real talk with real Marylanders — what do YOU want from your government?","Day in the life of Governor Moore 🔥"]
+};
+
+function makePost(handle, platform, daysAgoVal, engMultiplier=1){
+  const followers = FOLLOWERS[handle][platform];
+  const isVideo = platform==='YouTube'||platform==='TikTok'||(Math.random()>0.6);
+  let likes=0,comments=0,views=0,engRate;
+  if(isVideo){
+    views = rand(followers*0.05, followers*0.8)*engMultiplier;
+    engRate = views/followers;
+  } else {
+    likes = rand(500, followers*0.05)*engMultiplier;
+    comments = rand(50, likes*0.15)*engMultiplier;
+    engRate = (likes+comments)/followers;
+  }
+  const previews = POST_SAMPLES[platform];
+  return { handle, platform, text:previews[rand(0,previews.length-1)], likes, comments, views, engRate, followers, isVideo, date:daysAgo(daysAgoVal), breakout: engMultiplier>=3 };
+}
+
+function generateOwnPosts(period){
+  const days = {y24h:1, week:7, month:30, year:365}[period] || 7;
+  const posts = [];
+  const handles = ['@govwesmoore','@iamwesmoore'];
+  handles.forEach(h=>{
+    PLATFORMS.forEach(p=>{
+      for(let i=0;i<rand(2,5);i++){
+        const mult = Math.random()>0.85?rand(3,8):1;
+        posts.push(makePost(h,p,rand(0,days),mult));
+      }
+    });
+  });
+  return posts.sort((a,b)=>b.engRate-a.engRate);
+}
+
+const MENTION_ACCOUNTS = [
+  {handle:'@WBALNews',platform:'X',partisan:'center'},
+  {handle:'@BaltimoreSD',platform:'Facebook',partisan:'left'},
+  {handle:'@MDRepublicans',platform:'X',partisan:'right'},
+  {handle:'@CBSBaltimore',platform:'YouTube',partisan:'center'},
+  {handle:'@mdpoliticsnow',platform:'TikTok',partisan:'unknown'},
+  {handle:'@AfroAmericaNews',platform:'Instagram',partisan:'left'},
+  {handle:'@NationalReview',platform:'X',partisan:'right'},
+  {handle:'@GovWatchMD',platform:'Facebook',partisan:'center'},
+  {handle:'@ProgressiveMD',platform:'Instagram',partisan:'left'},
+  {handle:'@MDConservative',platform:'TikTok',partisan:'right'},
+  {handle:'@WTOP',platform:'X',partisan:'center'},
+  {handle:'@CityPaperBmore',platform:'Instagram',partisan:'left'},
+];
+const MENTION_TEXTS = [
+  'Governor Moore announced a major infrastructure push — biggest in MD history.',
+  'Moore signs sweeping criminal justice reform: what it means for Maryland.',
+  'Not everyone agrees with Governor Moore\'s new education policy.',
+  'Wes Moore makes his case for a second term in major speech today.',
+  'Breaking: Moore administration releases new climate action plan.',
+  'Governor Moore meets with local union leaders amid budget talks.',
+  'The Moore record: a look at promises made vs. promises kept.',
+  'Moore\'s approval rating hits new high, poll shows.',
+  'Critics say Governor Moore\'s housing plan falls short.',
+  'VIDEO: Wes Moore speaks at NAACP convention, crowd goes wild.',
+];
+
+function generateMentions(){
+  const mentions = [];
+  MENTION_ACCOUNTS.forEach((acc,i)=>{
+    const isVideo = acc.platform==='YouTube'||acc.platform==='TikTok';
+    const followers = rand(5000,800000);
+    const mult = Math.random()>0.8?rand(2,6):1;
+    let likes=0,comments=0,views=0,engRate;
+    if(isVideo){ views=rand(1000,followers*0.6)*mult; engRate=views/followers; }
+    else { likes=rand(100,followers*0.04)*mult; comments=rand(10,likes*0.2)*mult; engRate=(likes+comments)/followers; }
+    const sentiments = ['positive','neutral','negative'];
+    mentions.push({ ...acc, followers, text:MENTION_TEXTS[i%MENTION_TEXTS.length], likes, comments, views, engRate, sentiment:sentiments[rand(0,2)], date:daysAgo(rand(0,30)), daysAgoVal:rand(0,30) });
+  });
+  return mentions;
+}
+
+// ═══════════════════════════════════════════════
+//  CHART.JS INSTANCES
+// ═══════════════════════════════════════════════
+let charts = {};
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+const CHART_DEFAULTS = {
+  plugins:{ legend:{ labels:{ color:'#8892a4', font:{family:'Instrument Sans',size:11}, boxWidth:10 } } },
+  scales:{
+    x:{ ticks:{color:'#4e5970',font:{size:10}}, grid:{color:'rgba(37,43,56,0.8)'} },
+    y:{ ticks:{color:'#4e5970',font:{size:10}}, grid:{color:'rgba(37,43,56,0.8)'} }
+  }
+};
+
+function mergeDeep(a,b){ return Object.assign({},a,b, a.scales&&b.scales?{scales:Object.assign({},a.scales,b.scales)}:{}); }
+
+function buildLabel(period){
+  const n = {y24h:24,week:7,month:30,year:12}[period]||7;
+  const unit = {y24h:'hr',week:'d',month:'d',year:'mo'}[period]||'d';
+  return Array.from({length:n},(_,i)=>unit==='hr'?`${i+1}h`:`-${n-i}${unit}`);
+}
+
+function buildEngagementChart(posts){
+  destroyChart('eng');
+  const ctx = document.getElementById('engagementChart').getContext('2d');
+  const byPlatform = {};
+  PLATFORMS.forEach(p=>{ byPlatform[p]=[]; });
+  posts.forEach(post=>{ byPlatform[post.platform].push(post.engRate); });
+  const avgs = PLATFORMS.map(p=>byPlatform[p].length? byPlatform[p].reduce((a,b)=>a+b,0)/byPlatform[p].length:0);
+  charts['eng'] = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: PLATFORMS,
+      datasets:[{ label:'Avg Engagement Rate', data:avgs.map(v=>+(v*100).toFixed(3)),
+        backgroundColor: PLATFORMS.map(p=>PCOLORS[p]+'99'), borderColor: PLATFORMS.map(p=>PCOLORS[p]),
+        borderWidth:1.5, borderRadius:6 }]
+    },
+    options:{ ...CHART_DEFAULTS, plugins:{...CHART_DEFAULTS.plugins,tooltip:{callbacks:{label:c=>`${c.parsed.y.toFixed(3)}%`}}},
+      scales:{...CHART_DEFAULTS.scales, y:{...CHART_DEFAULTS.scales.y, ticks:{...CHART_DEFAULTS.scales.y.ticks, callback:v=>v+'%'}}} }
+  });
+}
+
+function buildFollowerChart(period){
+  destroyChart('fol');
+  const ctx = document.getElementById('followerChart').getContext('2d');
+  const labels = buildLabel(period);
+  const datasets = ['@govwesmoore','@iamwesmoore'].map((h,i)=>({
+    label:h, data:labels.map(()=>rand(200,4000)),
+    borderColor: i===0?'#4f7fff':'#7c5cfc', backgroundColor: i===0?'rgba(79,127,255,0.08)':'rgba(124,92,252,0.08)',
+    tension:0.4, fill:true, pointRadius:2
+  }));
+  charts['fol'] = new Chart(ctx, { type:'line', data:{labels,datasets}, options:{...CHART_DEFAULTS} });
+}
+
+function buildContentTypeChart(posts){
+  destroyChart('ctype');
+  const ctx = document.getElementById('contentTypeChart').getContext('2d');
+  const textPosts = posts.filter(p=>!p.isVideo);
+  const vidPosts = posts.filter(p=>p.isVideo);
+  const textAvg = textPosts.length? textPosts.reduce((a,b)=>a+b.engRate,0)/textPosts.length:0;
+  const vidAvg = vidPosts.length? vidPosts.reduce((a,b)=>a+b.engRate,0)/vidPosts.length:0;
+  charts['ctype'] = new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels:['Text/Image Posts','Video Posts'],
+      datasets:[{ data:[(textAvg*100).toFixed(3),(vidAvg*100).toFixed(3)],
+        backgroundColor:['rgba(79,127,255,0.8)','rgba(124,92,252,0.8)'],
+        borderColor:['#4f7fff','#7c5cfc'], borderWidth:2, hoverOffset:8 }]
+    },
+    options:{ plugins:{...CHART_DEFAULTS.plugins, tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.toFixed(3)}%`}}}, cutout:'65%' }
+  });
+}
+
+function buildCompFollowerChart(period){
+  destroyChart('compFol');
+  const ctx = document.getElementById('compFollowerChart').getContext('2d');
+  const labels = buildLabel(period);
+  const colors = ['#4f7fff','#7c5cfc','#2dd4a0','#e8b84b','#ff4f6a','#ff8c42'];
+  const allHandles = ['Moore (@govwesmoore + @iamwesmoore)', ...state.competitors];
+  const datasets = allHandles.map((h,i)=>({
+    label:h, data:labels.map(()=>rand(300,8000)*(i===0?2:1)),
+    borderColor:colors[i%colors.length], backgroundColor:colors[i%colors.length]+'15',
+    tension:0.4, fill:i===0, pointRadius:2
+  }));
+  charts['compFol'] = new Chart(ctx, { type:'line', data:{labels,datasets}, options:{...CHART_DEFAULTS} });
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER STAT CARDS
+// ═══════════════════════════════════════════════
+function renderStatCards(posts){
+  const container = document.getElementById('statsRow0');
+  container.innerHTML='';
+  const byPlatform={};
+  PLATFORMS.forEach(p=>byPlatform[p]={engRates:[],followers:0});
+  posts.forEach(p=>{ byPlatform[p.platform].engRates.push(p.engRate); byPlatform[p.platform].followers=Math.max(byPlatform[p.platform].followers, p.followers); });
+  const totalPosts = posts.length;
+  const overallEng = posts.reduce((a,b)=>a+b.engRate,0)/Math.max(posts.length,1);
+  const overallFollowers = Object.values(FOLLOWERS).flatMap(h=>Object.values(h)).reduce((a,b)=>a+b,0);
+  const cards = [
+    {label:'Total Followers',value:fmtN(overallFollowers),change:'+2.3%',dir:'up',platform:'All Platforms'},
+    {label:'Avg Eng. Rate',value:fmtPct(overallEng),change:'+0.4pp',dir:'up',platform:'All Platforms'},
+    {label:'Posts Analyzed',value:totalPosts,change:'—',dir:'',platform:'Selected Period'},
+    {label:'Top Platform',value:'Instagram',change:'3.21%',dir:'up',platform:'Highest Eng. Rate'},
+  ];
+  cards.forEach(c=>{
+    const el = document.createElement('div');
+    el.className='stat-card';
+    el.innerHTML=`
+      <div class="stat-platform"><span class="stat-label">${c.label}</span></div>
+      <div class="stat-value">${c.value}</div>
+      <div class="stat-change ${c.dir}">${c.dir==='up'?'↑':c.dir==='down'?'↓':''} ${c.change} &nbsp;<span style="color:var(--text3);font-weight:400">${c.platform}</span></div>`;
+    container.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER TABLES
+// ═══════════════════════════════════════════════
+function platformTag(p){ return `<span class="platform-tag ${PCLS[p]}">${p}</span>`; }
+function handleChip(h){ return `<span class="handle-chip">${h}</span>`; }
+
+function renderBestPosts(posts){
+  const body = document.getElementById('bestPostsBody');
+  body.innerHTML='';
+  const top = posts.slice(0,12);
+  top.forEach(p=>{
+    const tr = document.createElement('tr');
+    const maxEng = top[0].engRate||1;
+    const barW = Math.max(4,(p.engRate/maxEng*100));
+    tr.innerHTML=`
+      <td>${platformTag(p.platform)}</td>
+      <td>${handleChip(p.handle)}</td>
+      <td class="strong" style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.text}</td>
+      <td>${fmtN(p.likes)||'—'}</td>
+      <td>${fmtN(p.comments)||'—'}</td>
+      <td>${p.isVideo?fmtN(p.views):'—'}</td>
+      <td>
+        <div class="engagement-bar-wrap">
+          <div class="engagement-bar" style="width:${barW}px"></div>
+          <span>${fmtPct(p.engRate)}</span>
+        </div>
+      </td>
+      <td>${p.date}</td>
+      <td>${p.breakout?`<span class="breakout-badge"><svg viewBox="0 0 10 10"><polygon points="5,1 9,9 1,9"/></svg>BREAKOUT</span>`:'<span style="color:var(--text3);font-size:0.72rem">Normal</span>'}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+function renderMentions(mentions, partisan){
+  const filtered = partisan==='all'?mentions:mentions.filter(m=>m.partisan===partisan);
+  
+  // By engagement
+  const byEng = [...filtered].sort((a,b)=>b.engRate-a.engRate);
+  const engBody = document.getElementById('mentionsByEngBody');
+  engBody.innerHTML='';
+  byEng.slice(0,10).forEach(m=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${platformTag(m.platform)}</td>
+      <td>${handleChip(m.handle)}</td>
+      <td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.text}</td>
+      <td>${fmtN(m.likes)||'—'}</td>
+      <td>${fmtN(m.comments)||'—'}</td>
+      <td>${m.views>0?fmtN(m.views):'—'}</td>
+      <td class="strong">${fmtPct(m.engRate)}</td>
+      <td><span class="partisan-tag ${m.partisan}">${m.partisan.charAt(0).toUpperCase()+m.partisan.slice(1)}</span></td>`;
+    engBody.appendChild(tr);
+  });
+  
+  // By date
+  const byDate = [...filtered].sort((a,b)=>a.daysAgoVal-b.daysAgoVal);
+  const dateBody = document.getElementById('mentionsByDateBody');
+  dateBody.innerHTML='';
+  byDate.slice(0,10).forEach(m=>{
+    const sentColors = {positive:'var(--green)',neutral:'var(--text2)',negative:'var(--red)'};
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${platformTag(m.platform)}</td>
+      <td>${handleChip(m.handle)}</td>
+      <td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.text}</td>
+      <td class="strong">${fmtPct(m.engRate)}</td>
+      <td><span class="partisan-tag ${m.partisan}">${m.partisan.charAt(0).toUpperCase()+m.partisan.slice(1)}</span></td>
+      <td style="color:${sentColors[m.sentiment]};font-weight:600;font-size:0.78rem">${m.sentiment}</td>
+      <td>${m.date}</td>`;
+    dateBody.appendChild(tr);
+  });
+}
+
+const COMP_POST_TEXTS = [
+  'Hogan: Time to rethink Maryland\'s approach to public safety.',
+  'New announcement: Major infrastructure funding secured for MD.',
+  'Our vision for Maryland\'s next four years — detailed policy plan inside.',
+  'Breaking: Coalition announces statewide endorsements.',
+  'Town hall recap: What voters are saying across the state.',
+];
+
+function renderCompetitorTables(){
+  const all = state.competitors;
+  
+  // Breakout
+  const breakoutBody = document.getElementById('compBreakoutBody');
+  breakoutBody.innerHTML='';
+  if(!all.length){ breakoutBody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:2rem">Add competitor handles above to see their breakout posts.</td></tr>'; return; }
+  all.forEach(handle=>{
+    PLATFORMS.slice(0,3).forEach(p=>{
+      if(Math.random()>0.4){
+        const mult = rand(3,7);
+        const baseEng = rand(1,3)/100;
+        const engRate = baseEng*mult;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${platformTag(p)}</td>
+          <td>${handleChip(handle)}</td>
+          <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${COMP_POST_TEXTS[rand(0,COMP_POST_TEXTS.length-1)]}</td>
+          <td class="strong">${fmtPct(engRate)}</td>
+          <td style="color:var(--orange);font-weight:700">+${mult}× avg</td>
+          <td><span class="breakout-badge"><svg viewBox="0 0 10 10"><polygon points="5,1 9,9 1,9"/></svg>RISING</span></td>
+          <td>${daysAgo(rand(0,7))}</td>`;
+        breakoutBody.appendChild(tr);
+      }
+    });
+  });
+  
+  // Top
+  const topBody = document.getElementById('compTopBody');
+  topBody.innerHTML='';
+  all.forEach(handle=>{
+    PLATFORMS.forEach(p=>{
+      const isVideo = p==='YouTube'||p==='TikTok';
+      const followers=rand(50000,500000);
+      const likes=isVideo?0:rand(500,20000);
+      const comments=isVideo?0:rand(50,likes*0.15);
+      const views=isVideo?rand(10000,500000):0;
+      const engRate=isVideo?views/followers:(likes+comments)/followers;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td>${platformTag(p)}</td>
+        <td>${handleChip(handle)}</td>
+        <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${COMP_POST_TEXTS[rand(0,COMP_POST_TEXTS.length-1)]}</td>
+        <td>${fmtN(likes)||'—'}</td>
+        <td>${fmtN(comments)||'—'}</td>
+        <td>${views?fmtN(views):'—'}</td>
+        <td class="strong">${fmtPct(engRate)}</td>
+        <td>${daysAgo(rand(0,30))}</td>`;
+      topBody.appendChild(tr);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  ALERT PANEL & NOTIFICATIONS
+// ═══════════════════════════════════════════════
+function populateAlerts(){
+  const list = document.getElementById('alertList');
+  const alerts = [
+    {platform:'TikTok',handle:'@iamwesmoore',text:'New video hitting 12× avg engagement — climate bill signing.',metric:'Engagement: 8.2% (avg 0.6%)',time:'4 min ago'},
+    {platform:'X',handle:'@govwesmoore',text:'Tweet on criminal justice reform trending in MD.',metric:'Velocity: 2.3K engagements/hr',time:'22 min ago'},
+    {platform:'Instagram',handle:'@larryhogan',text:'Competitor post gaining rapid traction statewide.',metric:'Engagement: 6.1% (avg 1.0%)',time:'1h ago'},
+    {platform:'YouTube',handle:'@CBSBaltimore',text:'Mention of Governor Moore in viral news clip.',metric:'Views: 180K in 3 hours',time:'2h ago'},
+  ];
+  list.innerHTML = alerts.map(a=>`
+    <div class="alert-item">
+      <div class="alert-item-head">
+        <span class="alert-item-platform" style="color:${PCOLORS[a.platform]}">${a.platform} · ${a.handle}</span>
+        <span class="alert-item-time">${a.time}</span>
+      </div>
+      <div class="alert-item-text">${a.text}</div>
+      <div class="alert-item-metric">⚡ ${a.metric}</div>
+    </div>`).join('');
+}
+
+function toggleAlerts(){
+  state.alertPanelOpen = !state.alertPanelOpen;
+  document.getElementById('alertPanel').classList.toggle('open', state.alertPanelOpen);
+}
+
+function saveAlertConfig(){
+  const email = document.getElementById('alertEmail').value;
+  if(email) alert(`✓ Breakout alerts will be sent to ${email}`);
+  else alert('Enter an email address first.');
+}
+
+// ═══════════════════════════════════════════════
+//  TAB & FILTER LOGIC
+// ═══════════════════════════════════════════════
+const tabs = document.querySelectorAll('.tab');
+const pages = document.querySelectorAll('.page');
+
+function switchTab(i){
+  tabs.forEach((t,j)=>t.classList.toggle('active',i===j));
+  pages.forEach((p,j)=>p.classList.toggle('active',i===j));
+}
+
+function setFilter(key, val, btn){
+  state[key] = val;
+  const group = btn.parentElement;
+  group.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  refreshTab0();
+  refreshTab2();
+}
+
+function setPartisan(val, btn){
+  state.partisan = val;
+  const group = btn.parentElement;
+  group.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('partisanSubLabel').textContent = `Filtered by: ${val==='all'?'All Lean':'Partisan lean = '+val.charAt(0).toUpperCase()+val.slice(1)} · newest first`;
+  renderMentions(window._mentions, state.partisan);
+}
+
+// ═══════════════════════════════════════════════
+//  REFRESH FUNCTIONS
+// ═══════════════════════════════════════════════
+function refreshTab0(){
+  let posts = generateOwnPosts(state.period0);
+  if(state.handle0==='gov') posts=posts.filter(p=>p.handle==='@govwesmoore');
+  if(state.handle0==='iam') posts=posts.filter(p=>p.handle==='@iamwesmoore');
+  renderStatCards(posts);
+  buildEngagementChart(posts);
+  buildFollowerChart(state.period0);
+  buildContentTypeChart(posts);
+  renderBestPosts(posts);
+}
+
+function refreshTab2(){
+  buildCompFollowerChart(state.period2);
+  renderCompetitorTables();
+}
+
+// ═══════════════════════════════════════════════
+//  COMPETITOR MANAGEMENT
+// ═══════════════════════════════════════════════
+function addCompetitor(){
+  let val = document.getElementById('competitorInput').value.trim();
+  if(!val) return;
+  if(!val.startsWith('@')) val='@'+val;
+  if(!state.competitors.includes(val)){
+    state.competitors.push(val);
+    renderCompetitorChips();
+    refreshTab2();
+  }
+  document.getElementById('competitorInput').value='';
+}
+
+function removeCompetitor(handle){
+  state.competitors = state.competitors.filter(c=>c!==handle);
+  renderCompetitorChips();
+  refreshTab2();
+}
+
+function renderCompetitorChips(){
+  const el = document.getElementById('competitorChips');
+  el.innerHTML = state.competitors.map(h=>`
+    <div class="competitor-chip">${h}
+      <button onclick="removeCompetitor('${h}')" title="Remove">×</button>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+function initDashboard(){
+  window._mentions = generateMentions();
+  renderCompetitorChips();
+  refreshTab0();
+  renderMentions(window._mentions, 'all');
+  refreshTab2();
+  populateAlerts();
+}
+</script>
+</body>
+</html>
