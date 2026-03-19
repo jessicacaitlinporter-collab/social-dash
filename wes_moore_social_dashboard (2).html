@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Wes Moore for Maryland — Social Command Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#0d0730; --surface:#130a45; --surface2:#1a0f5c; --surface3:#221468;
+  --border:#2d1e80; --border2:#3a28a0;
+  --accent:#eca400; --accent2:#f5b800; --gold:#eca400;
+  --red:#ff4f6a; --green:#2dd4a0; --orange:#eca400; --teal:#92a9ec;
+  --text:#ffffff; --text2:#c5cef5; --text3:#7a85c0;
+  --fb:#1877f2; --ig:#e1306c; --x:#e7e9ea; --yt:#ff0000; --tt:#69c9d0; --rd:#ff4500;
+  --radius:10px; --radius-lg:16px;
+  --indigo:#1f0280; --periwinkle:#92a9ec; --mid-indigo:#495aee;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.04;background-image:linear-gradient(var(--border2) 1px,transparent 1px),linear-gradient(90deg,var(--border2) 1px,transparent 1px);background-size:32px 32px;}
+#app{position:relative;z-index:1;}
+
+#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;background-image:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(236,164,0,.15) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(73,90,238,.2) 0%,transparent 60%);}
+.gate-box{text-align:center;max-width:380px;width:90%;}
+.gate-logo{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--gold);letter-spacing:.18em;text-transform:uppercase;margin-bottom:2.5rem;}
+.gate-title{font-family:'Anton',sans-serif;font-size:2.8rem;color:var(--text);line-height:1.1;margin-bottom:.5rem;letter-spacing:.04em;}
+.gate-sub{color:var(--text2);font-size:.88rem;margin-bottom:2.5rem;}
+.gate-input{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:'Roboto',monospace;font-size:1rem;padding:14px 18px;border-radius:var(--radius);outline:none;letter-spacing:.08em;transition:border-color .2s;margin-bottom:1rem;}
+.gate-input:focus{border-color:var(--accent);}
+.gate-btn{width:100%;background:var(--accent);color:var(--indigo);border:none;padding:14px;border-radius:var(--radius);font-family:'Anton',sans-serif;letter-spacing:.08em;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s,transform .15s;}
+.gate-btn:hover{opacity:.88;transform:translateY(-1px);}
+.gate-error{color:var(--red);font-size:.8rem;margin-top:.6rem;height:1rem;}
+.gate-hint{color:var(--text3);font-size:.75rem;margin-top:1.5rem;}
+
+#app{display:none;min-height:100vh;}
+
+header{position:sticky;top:0;z-index:100;background:rgba(13,7,48,.95);backdrop-filter:blur(20px);border-bottom:2px solid var(--gold);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:58px;}
+.header-left{display:flex;align-items:center;gap:1.5rem;}
+.header-logo{font-family:'Anton',sans-serif;font-size:1.15rem;letter-spacing:.06em;text-transform:uppercase;}
+.header-logo span{color:var(--accent);}
+.header-badge{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-size:.7rem;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.06em;}
+.header-right{display:flex;align-items:center;gap:1rem;}
+.live-chip{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--gold);font-weight:700;letter-spacing:.1em;font-family:'Anton',sans-serif;}
+.live-dot{width:7px;height:7px;background:var(--gold);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.alert-bell{position:relative;background:var(--surface2);border:1px solid var(--border2);width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s;}
+.alert-bell:hover{border-color:var(--accent);}
+.alert-bell svg{width:16px;height:16px;stroke:var(--text2);}
+.alert-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--red);border-radius:50%;border:1.5px solid var(--bg);}
+
+.tab-bar{display:flex;border-bottom:2px solid var(--border2);background:var(--surface);padding:0 2rem;position:sticky;top:58px;z-index:99;overflow-x:auto;}
+.tab{padding:14px 22px;font-size:.75rem;font-weight:700;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.1em;text-transform:uppercase;transition:color .2s,border-color .2s;white-space:nowrap;font-family:'Roboto',sans-serif;}
+.tab:hover{color:var(--text2);}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+.page{display:none;padding:2rem;max-width:1500px;margin:0 auto;}
+.page.active{display:block;}
+.page-intro{color:var(--periwinkle);font-size:.82rem;line-height:1.6;margin-bottom:1.5rem;max-width:800px;}
+
+.filter-bar{display:flex;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:.75rem 1rem;}
+.filter-label{font-size:.67rem;color:var(--periwinkle);font-weight:700;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;}
+.filter-group{display:flex;gap:5px;flex-wrap:wrap;}
+.filter-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-size:.72rem;padding:5px 12px;border-radius:5px;cursor:pointer;font-weight:500;transition:all .15s;font-family:inherit;white-space:nowrap;}
+.filter-btn:hover{border-color:var(--border2);color:var(--text);}
+.filter-btn.active{background:var(--gold);border-color:var(--gold);color:var(--indigo);font-weight:700;}
+.filter-divider{width:1px;background:var(--border2);height:24px;margin:0 .1rem;align-self:center;}
+
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.25rem 1.4rem;position:relative;overflow:hidden;transition:border-color .2s;}
+.stat-card:hover{border-color:var(--border2);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--periwinkle));opacity:0;transition:opacity .3s;}
+.stat-card:hover::before{opacity:1;}
+.stat-label{font-size:.67rem;color:var(--periwinkle);font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-bottom:.55rem;font-family:'Roboto',sans-serif;}
+.stat-value{font-family:'Roboto',monospace;font-size:1.8rem;font-weight:500;color:var(--text);line-height:1;margin-bottom:.3rem;}
+.stat-change{font-size:.71rem;font-weight:600;}
+.stat-change.up{color:var(--green);}
+.stat-change.down{color:var(--red);}
+.stat-sub{font-size:.67rem;color:var(--text3);margin-top:2px;font-family:'Roboto',sans-serif;}
+
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;}
+.chart-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.5rem;}
+.chart-card.full{grid-column:1/-1;}
+.chart-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.1rem;}
+.chart-title{font-size:.84rem;font-weight:700;color:var(--text);font-family:'Roboto',sans-serif;}
+.chart-subtitle{font-size:.69rem;color:var(--text3);margin-top:3px;}
+.chart-canvas-wrap{position:relative;height:220px;}
+.chart-canvas-wrap.tall{height:270px;}
+
+.table-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);margin-bottom:1.25rem;overflow:hidden;}
+.table-header{padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;}
+.table-title{font-size:.84rem;font-weight:700;color:var(--text);font-family:'Roboto',sans-serif;}
+.table-sub{font-size:.69rem;color:var(--text3);margin-top:2px;}
+.table-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:9px 1rem;text-align:left;font-size:.64rem;font-weight:700;color:var(--periwinkle);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border2);background:var(--surface2);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--surface2);}
+tbody td{padding:10px 1rem;font-size:.79rem;color:var(--text2);vertical-align:middle;}
+td.strong{color:var(--text);font-weight:600;}
+td.mono{font-family:'Roboto',monospace;}
+
+.platform-tag{display:inline-flex;align-items:center;gap:4px;font-size:.67rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;}
+.platform-tag.fb{background:rgba(24,119,242,.15);color:var(--fb);}
+.platform-tag.ig{background:rgba(225,48,108,.15);color:var(--ig);}
+.platform-tag.x{background:rgba(231,233,234,.08);color:var(--x);}
+.platform-tag.yt{background:rgba(255,0,0,.15);color:var(--yt);}
+.platform-tag.tt{background:rgba(105,201,208,.15);color:var(--tt);}
+.platform-tag.rd{background:rgba(255,69,0,.15);color:var(--rd);}
+.handle-chip{font-family:'Roboto',monospace;font-size:.69rem;background:rgba(236,164,0,.12);border:1px solid rgba(236,164,0,.35);padding:2px 7px;border-radius:4px;color:var(--gold);white-space:nowrap;}
+.partisan-tag{font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;}
+.partisan-tag.left{background:rgba(79,127,255,.15);color:var(--accent);}
+.partisan-tag.right{background:rgba(255,79,106,.15);color:var(--red);}
+.partisan-tag.center{background:rgba(232,184,75,.15);color:var(--gold);}
+.partisan-tag.unknown{background:var(--surface3);color:var(--text3);}
+.sentiment-tag{font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:4px;}
+.sentiment-tag.positive{background:rgba(45,212,160,.12);color:var(--green);}
+.sentiment-tag.negative{background:rgba(255,79,106,.12);color:var(--red);}
+.sentiment-tag.neutral{background:var(--surface3);color:var(--text3);}
+.breakout-badge{display:inline-flex;align-items:center;gap:4px;font-size:.66rem;font-weight:700;color:var(--indigo);background:var(--gold);border:1px solid var(--gold);padding:2px 7px;border-radius:4px;white-space:nowrap;}
+.normal-badge{font-size:.66rem;color:var(--text3);background:var(--surface3);padding:2px 7px;border-radius:4px;}
+.mult-badge{font-size:.71rem;font-weight:700;font-family:'Roboto',monospace;}
+.mult-badge.high{color:var(--gold);}
+.mult-badge.med{color:var(--periwinkle);}
+.mult-badge.low{color:var(--text2);}
+.post-link{color:var(--accent);text-decoration:none;font-size:.77rem;max-width:260px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.post-link:hover{text-decoration:underline;}
+.topic-geo{display:inline-block;background:var(--surface3);border:1px solid var(--border2);color:var(--text2);font-size:.67rem;padding:2px 7px;border-radius:4px;}
+
+.section-label{font-size:.72rem;font-weight:400;font-family:'Anton',sans-serif;color:var(--gold);letter-spacing:.14em;text-transform:uppercase;margin:1.5rem 0 .85rem;display:flex;align-items:center;gap:8px;}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+.comp-input-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1.25rem;}
+.comp-input-row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.75rem;}
+.comp-input-label{font-size:.75rem;font-weight:700;color:var(--text2);white-space:nowrap;}
+.handle-input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:'Roboto',monospace;font-size:.82rem;padding:8px 12px;border-radius:7px;outline:none;width:200px;transition:border-color .2s;}
+.handle-input:focus{border-color:var(--accent);}
+.add-btn{background:var(--gold);color:var(--indigo);border:none;padding:8px 16px;border-radius:7px;font-family:'Anton',sans-serif;letter-spacing:.06em;font-size:.8rem;font-weight:400;cursor:pointer;transition:opacity .2s;white-space:nowrap;}
+.add-btn:hover{opacity:.85;}
+.competitor-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.competitor-chip{background:var(--surface3);border:1px solid var(--border2);color:var(--text2);font-family:'Roboto',monospace;font-size:.74rem;padding:4px 10px;border-radius:6px;display:flex;align-items:center;gap:6px;}
+.competitor-chip button{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:0;}
+.competitor-chip button:hover{color:var(--red);}
+
+.alert-panel{position:fixed;top:58px;right:0;width:360px;height:calc(100vh - 58px);background:var(--surface);border-left:2px solid var(--gold);z-index:200;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto;}
+.alert-panel.open{transform:translateX(0);}
+.alert-panel-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--surface);}
+.alert-panel-title{font-size:.88rem;font-weight:700;}
+.close-alerts{background:none;border:none;color:var(--text3);cursor:pointer;font-size:1.2rem;}
+.alert-setup{padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--surface2);}
+.alert-setup-label{font-size:.67rem;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:.65rem;}
+.alert-form{display:flex;flex-direction:column;gap:.55rem;}
+.alert-form input,.alert-form select{background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:'Roboto',monospace;font-size:.78rem;padding:7px 10px;border-radius:7px;outline:none;width:100%;}
+.alert-form input:focus,.alert-form select:focus{border-color:var(--accent);}
+.alert-form button{background:var(--gold);color:var(--indigo);border:none;padding:8px;border-radius:7px;font-weight:700;cursor:pointer;font-family:'Anton',sans-serif;letter-spacing:.06em;font-size:.8rem;}
+.notify-toggle{display:flex;align-items:center;gap:10px;padding:.7rem 1.5rem;border-bottom:1px solid var(--border);}
+.toggle-label{font-size:.78rem;color:var(--text2);flex:1;}
+.toggle{position:relative;width:38px;height:20px;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--surface3);border-radius:20px;cursor:pointer;transition:background .2s;}
+.toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:var(--text3);border-radius:50%;transition:transform .2s,background .2s;}
+.toggle input:checked+.toggle-slider{background:var(--accent);}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px);background:#fff;}
+.alert-item{padding:.9rem 1.5rem;border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer;}
+.alert-item:hover{background:var(--surface2);}
+.alert-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
+.alert-item-platform{font-size:.7rem;font-weight:700;}
+.alert-item-time{font-size:.67rem;color:var(--text3);}
+.alert-item-text{font-size:.79rem;color:var(--text2);line-height:1.45;}
+.alert-item-metric{font-size:.71rem;color:var(--gold);font-weight:600;margin-top:3px;}
+
+@media(max-width:900px){
+  .charts-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  header{padding:0 1rem;}
+  .tab-bar{padding:0 1rem;}
+  .page{padding:1rem;}
+}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">Wes Moore for Maryland</div>
+    <div class="gate-title">Social Command<br/>Center</div>
+    <div class="gate-sub" style="color:var(--periwinkle)">Restricted access. Authorized personnel only.</div>
+    <input class="gate-input" id="pwInput" type="password" placeholder="Enter access code" autocomplete="off"/>
+    <button class="gate-btn" onclick="checkPassword()">Authenticate →</button>
+    <div class="gate-error" id="gateError"></div>
+    <div class="gate-hint">Demo password: <strong style="color:var(--text2);font-family:'Roboto',monospace">moore2026</strong></div>
+  </div>
+</div>
+
+<div id="app">
+
+<header>
+  <div class="header-left">
+    <div class="header-logo" style="display:flex;align-items:baseline;gap:6px"><span style="color:var(--gold)">WES MOORE</span> <span style="color:var(--periwinkle);font-size:.85rem">COMMAND</span></div>
+    <div class="header-badge" style="background:rgba(236,164,0,.12);border-color:rgba(236,164,0,.4);color:var(--gold);">INTERNAL</div>
+  </div>
+  <div class="header-right">
+    <div class="live-chip"><div class="live-dot"></div>LIVE</div>
+    <div class="alert-bell" onclick="toggleAlerts()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div class="alert-dot"></div>
+    </div>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab(0)">📊 Own Performance</div>
+  <div class="tab" onclick="switchTab(1)">🔍 Social Listening</div>
+  <div class="tab" onclick="switchTab(2)">⚔️ Competitive Analysis</div>
+</div>
+
+<!-- ═══════════ TAB 1: OWN PERFORMANCE ═══════════ -->
+<div class="page active" id="page0">
+  <p class="page-intro">Tracking <strong>@govwesmoore</strong> and <strong>@iamwesmoore</strong> across Facebook, Instagram, X, YouTube, and TikTok.</p>
+
+  <div class="filter-bar">
+    <span class="filter-label">Period</span>
+    <div class="filter-group">
+      <button class="filter-btn" data-key="period0" data-val="24h" onclick="setF(this)">24h</button>
+      <button class="filter-btn active" data-key="period0" data-val="week" onclick="setF(this)">Week</button>
+      <button class="filter-btn" data-key="period0" data-val="month" onclick="setF(this)">Month</button>
+      <button class="filter-btn" data-key="period0" data-val="year" onclick="setF(this)">Year</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Handle</span>
+    <div class="filter-group">
+      <button class="filter-btn active" data-key="handle0" data-val="all" onclick="setF(this)">All</button>
+      <button class="filter-btn" data-key="handle0" data-val="gov" onclick="setF(this)">@govwesmoore</button>
+      <button class="filter-btn" data-key="handle0" data-val="iam" onclick="setF(this)">@iamwesmoore</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Platform</span>
+    <div class="filter-group">
+      <button class="filter-btn active" data-key="plat0" data-val="all" onclick="setF(this)">All</button>
+      <button class="filter-btn" data-key="plat0" data-val="Facebook" onclick="setF(this)">Facebook</button>
+      <button class="filter-btn" data-key="plat0" data-val="Instagram" onclick="setF(this)">Instagram</button>
+      <button class="filter-btn" data-key="plat0" data-val="X" onclick="setF(this)">X</button>
+      <button class="filter-btn" data-key="plat0" data-val="YouTube" onclick="setF(this)">YouTube</button>
+      <button class="filter-btn" data-key="plat0" data-val="TikTok" onclick="setF(this)">TikTok</button>
+    </div>
+  </div>
+
+  <div class="stats-row" id="statsRow0"></div>
+
+  <div class="section-label">Follower Growth</div>
+  <div class="charts-grid">
+    <div class="chart-card full">
+      <div class="chart-header"><div><div class="chart-title">Overall Follower Growth Over Time</div><div class="chart-subtitle">Combined net new followers — both handles, selected platforms</div></div></div>
+      <div class="chart-canvas-wrap tall"><canvas id="followerLineChart"></canvas></div>
+    </div>
+    <div class="chart-card full">
+      <div class="chart-header"><div><div class="chart-title">Follower Growth by Platform</div><div class="chart-subtitle">Net new followers per platform for selected period</div></div></div>
+      <div class="chart-canvas-wrap"><canvas id="followerBarChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-label">Engagement</div>
+  <div class="chart-card" style="margin-bottom:1.25rem;">
+    <div class="chart-header"><div><div class="chart-title">Engagement Rate Over Time</div><div class="chart-subtitle">Text posts: (Likes + Comments) ÷ Followers &nbsp;·&nbsp; Video: Views ÷ Followers</div></div></div>
+    <div class="chart-canvas-wrap tall"><canvas id="engLineChart"></canvas></div>
+  </div>
+
+  <div class="section-label">Top Posts by Engagement</div>
+  <div class="table-card">
+    <div class="table-header"><div><div class="table-title">Best Performing Posts</div><div class="table-sub">Ranked by engagement rate · post preview links to original post</div></div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>Platform</th><th>Handle</th><th>Post Preview</th>
+          <th>Overall Reach</th><th>% Reach Non-Followers</th>
+          <th>Eng. Rate</th><th>Date Posted</th><th>vs. Avg Post</th><th>Status</th>
+        </tr></thead>
+        <tbody id="bestPostsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TAB 2: SOCIAL LISTENING ═══════════ -->
+<div class="page" id="page1">
+  <p class="page-intro">Trending topics across all platforms + external mentions of <strong>Wes Moore</strong>, <strong>Governor Moore</strong>, and <strong>Westley Watande Moore</strong> from accounts other than @govwesmoore and @iamwesmoore.</p>
+
+  <div class="section-label">Trending Topics</div>
+  <div class="filter-bar">
+    <span class="filter-label">Geography</span>
+    <div class="filter-group">
+      <button class="filter-btn active" data-key="geo" data-val="all" onclick="setF(this)">National + Maryland</button>
+      <button class="filter-btn" data-key="geo" data-val="national" onclick="setF(this)">National Only</button>
+      <button class="filter-btn" data-key="geo" data-val="maryland" onclick="setF(this)">Maryland Only</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Period</span>
+    <div class="filter-group">
+      <button class="filter-btn" data-key="period1t" data-val="24h" onclick="setF(this)">24h</button>
+      <button class="filter-btn active" data-key="period1t" data-val="week" onclick="setF(this)">Week</button>
+      <button class="filter-btn" data-key="period1t" data-val="month" onclick="setF(this)">Month</button>
+    </div>
+  </div>
+  <div class="table-card">
+    <div class="table-header"><div><div class="table-title">Top Topics Being Posted About</div><div class="table-sub" id="geoSubLabel">All geographies</div></div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>#</th><th>Topic</th><th>Platforms Active</th><th>Post Volume</th><th>Avg Eng. Rate</th><th>Sentiment</th><th>Geography</th><th>Relative Volume</th></tr></thead>
+        <tbody id="topicsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:2rem;">External Mentions of the Candidate</div>
+  <div class="filter-bar">
+    <span class="filter-label">Period</span>
+    <div class="filter-group">
+      <button class="filter-btn" data-key="period1" data-val="24h" onclick="setF(this)">24h</button>
+      <button class="filter-btn active" data-key="period1" data-val="week" onclick="setF(this)">Week</button>
+      <button class="filter-btn" data-key="period1" data-val="month" onclick="setF(this)">Month</button>
+      <button class="filter-btn" data-key="period1" data-val="year" onclick="setF(this)">Year</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Platform</span>
+    <div class="filter-group">
+      <button class="filter-btn active" data-key="plat1" data-val="all" onclick="setF(this)">All</button>
+      <button class="filter-btn" data-key="plat1" data-val="Facebook" onclick="setF(this)">Facebook</button>
+      <button class="filter-btn" data-key="plat1" data-val="Instagram" onclick="setF(this)">Instagram</button>
+      <button class="filter-btn" data-key="plat1" data-val="X" onclick="setF(this)">X</button>
+      <button class="filter-btn" data-key="plat1" data-val="YouTube" onclick="setF(this)">YouTube</button>
+      <button class="filter-btn" data-key="plat1" data-val="TikTok" onclick="setF(this)">TikTok</button>
+      <button class="filter-btn" data-key="plat1" data-val="Reddit" onclick="setF(this)">Reddit</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Partisan Lean</span>
+    <div class="filter-group">
+      <button class="filter-btn active" data-key="partisan" data-val="all" onclick="setF(this)">All</button>
+      <button class="filter-btn" data-key="partisan" data-val="left" onclick="setF(this)">Left</button>
+      <button class="filter-btn" data-key="partisan" data-val="center" onclick="setF(this)">Center</button>
+      <button class="filter-btn" data-key="partisan" data-val="right" onclick="setF(this)">Right</button>
+      <button class="filter-btn" data-key="partisan" data-val="unknown" onclick="setF(this)">Unknown</button>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:1.25rem;">
+    <div class="chart-header"><div><div class="chart-title">Mentions of Candidate Over Time</div><div class="chart-subtitle">Volume of external posts referencing Wes Moore / Governor Moore / Westley Watande Moore</div></div></div>
+    <div class="chart-canvas-wrap tall"><canvas id="mentionsLineChart"></canvas></div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header"><div><div class="table-title">Mentions by Engagement</div><div class="table-sub">Highest to lowest engagement rate</div></div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Platform</th><th>Account</th><th>Post Preview</th><th>Reach</th><th>Eng. Rate</th><th>Partisan Lean</th><th>Sentiment</th><th>Date</th></tr></thead>
+        <tbody id="mentionsByEngBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header"><div><div class="table-title">Mentions by Recency</div><div class="table-sub" id="partisanSubLabel">Newest first · all partisan leans</div></div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Platform</th><th>Account</th><th>Post Preview</th><th>Eng. Rate</th><th>Partisan Lean</th><th>Sentiment</th><th>Date</th></tr></thead>
+        <tbody id="mentionsByDateBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TAB 3: COMPETITIVE ANALYSIS ═══════════ -->
+<div class="page" id="page2">
+  <p class="page-intro">Compare Moore accounts against competitor handles. Add handles below to include them in all charts and tables.</p>
+
+  <div class="comp-input-bar">
+    <div class="comp-input-row">
+      <span class="comp-input-label">Add Competitor Handle</span>
+      <input class="handle-input" id="competitorInput" type="text" placeholder="@handle" onkeydown="if(event.key==='Enter')addCompetitor()"/>
+      <button class="add-btn" onclick="addCompetitor()">+ Add</button>
+    </div>
+    <div class="competitor-chips" id="competitorChips"></div>
+  </div>
+
+  <div class="filter-bar">
+    <span class="filter-label">Period</span>
+    <div class="filter-group">
+      <button class="filter-btn" data-key="period2" data-val="24h" onclick="setF(this)">24h</button>
+      <button class="filter-btn active" data-key="period2" data-val="week" onclick="setF(this)">Week</button>
+      <button class="filter-btn" data-key="period2" data-val="month" onclick="setF(this)">Month</button>
+      <button class="filter-btn" data-key="period2" data-val="year" onclick="setF(this)">Year</button>
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Platform</span>
+    <div class="filter-group">
+      <button class="filter-btn active" data-key="plat2" data-val="all" onclick="setF(this)">All</button>
+      <button class="filter-btn" data-key="plat2" data-val="Facebook" onclick="setF(this)">Facebook</button>
+      <button class="filter-btn" data-key="plat2" data-val="Instagram" onclick="setF(this)">Instagram</button>
+      <button class="filter-btn" data-key="plat2" data-val="X" onclick="setF(this)">X</button>
+      <button class="filter-btn" data-key="plat2" data-val="YouTube" onclick="setF(this)">YouTube</button>
+      <button class="filter-btn" data-key="plat2" data-val="TikTok" onclick="setF(this)">TikTok</button>
+    </div>
+  </div>
+
+  <div class="section-label">Follower Growth Comparison</div>
+  <div class="chart-card" style="margin-bottom:1.25rem;">
+    <div class="chart-header"><div><div class="chart-title">Follower Growth — Moore vs. Competitors</div><div class="chart-subtitle">Net new followers across all platforms for selected period</div></div></div>
+    <div class="chart-canvas-wrap tall"><canvas id="compFollowerChart"></canvas></div>
+  </div>
+
+  <div class="section-label">Competitor Topic Trends</div>
+  <div class="table-card">
+    <div class="table-header"><div><div class="table-title">Top Topics Competitors Are Posting About</div><div class="table-sub">Where competitors are getting traction by topic area</div></div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Competitor</th><th>Topic</th><th>Platforms</th><th>Post Volume</th><th>Avg Eng. Rate</th><th>Getting Traction?</th><th>Volume Trend</th></tr></thead>
+        <tbody id="compTopicsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-label">Top Competitor Posts</div>
+  <div class="table-card">
+    <div class="table-header"><div><div class="table-title">Highest Performing Competitor Posts</div><div class="table-sub">Ranked by engagement rate · post preview links to original</div></div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>Platform</th><th>Handle</th><th>Post Preview</th>
+          <th>Overall Reach</th><th>% Reach Non-Followers</th>
+          <th>Eng. Rate</th><th>Date Posted</th><th>vs. Avg Post</th><th>Status</th>
+        </tr></thead>
+        <tbody id="compTopPostsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- end #app -->
+
+<div class="alert-panel" id="alertPanel">
+  <div class="alert-panel-header">
+    <div class="alert-panel-title">⚡ Breakout Alerts</div>
+    <button class="close-alerts" onclick="toggleAlerts()">✕</button>
+  </div>
+  <div class="alert-setup">
+    <div class="alert-setup-label">Configure Notifications</div>
+    <div class="alert-form">
+      <input type="email" placeholder="Alert email address" id="alertEmail"/>
+      <select id="alertThreshold">
+        <option value="2">Alert at 2× avg engagement</option>
+        <option value="5" selected>Alert at 5× avg engagement</option>
+        <option value="10">Alert at 10× avg engagement</option>
+      </select>
+      <select id="alertScope">
+        <option value="all">All accounts (own + competitors)</option>
+        <option value="own">Own accounts only</option>
+        <option value="comp">Competitors only</option>
+      </select>
+      <button onclick="saveAlertConfig()">Save Settings</button>
+    </div>
+  </div>
+  <div class="notify-toggle"><span class="toggle-label">Browser push notifications</span><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+  <div class="notify-toggle"><span class="toggle-label">Daily email digest</span><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+  <div id="alertList"></div>
+</div>
+
+<script>
+const PW='moore2026';
+document.getElementById('pwInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkPassword();});
+function checkPassword(){
+  if(document.getElementById('pwInput').value.trim()===PW){
+    document.getElementById('gate').style.display='none';
+    document.getElementById('app').style.display='block';
+    initDashboard();
+  }else{
+    const el=document.getElementById('gateError');el.textContent='Incorrect access code.';document.getElementById('pwInput').value='';setTimeout(()=>el.textContent='',3000);
+  }
+}
+
+const S={period0:'week',handle0:'all',plat0:'all',period1:'week',period1t:'week',partisan:'all',geo:'all',plat1:'all',period2:'week',plat2:'all',competitors:['@larryhogan','@brandanarundel'],alertOpen:false};
+const PLATFORMS=['Facebook','Instagram','X','YouTube','TikTok'];
+const ALL_PLATS=['Facebook','Instagram','X','YouTube','TikTok','Reddit'];
+const PCOLOR={Facebook:'#1877f2',Instagram:'#e1306c',X:'#e7e9ea',YouTube:'#ff0000',TikTok:'#69c9d0',Reddit:'#ff4500'};
+const PCLS={Facebook:'fb',Instagram:'ig',X:'x',YouTube:'yt',TikTok:'tt',Reddit:'rd'};
+const FOLLOWERS={'@govwesmoore':{Facebook:422000,Instagram:314000,X:288000,YouTube:97000,TikTok:191000},'@iamwesmoore':{Facebook:190000,Instagram:252000,X:207000,YouTube:63000,TikTok:328000}};
+const POST_TEXT={
+  Facebook:["Proud to sign HB 1111 — expanding broadband to every corner of Maryland.","Investing in Maryland's future. Here's what our latest budget means for families.","Honored to welcome @POTUS to Annapolis this week for infrastructure talks.","New housing initiative: 50,000 homes by 2028."],
+  Instagram:["📸 Behind the scenes at today's ribbon cutting in Baltimore.","Black business owners in Maryland are building something real 🙌","Our commitment to education reform is unwavering — here's the progress.","Big day in Annapolis. Grateful for every Marylander who made this possible."],
+  X:["Just signed an EO directing state agencies to reduce emissions 45% by 2030.","Maryland families deserve relief. We delivered. Here's the breakdown →","Grateful for the warm welcome in Prince George's County today.","Criminal justice reform is about dignity and second chances."],
+  YouTube:["Governor Moore Full Address: Investing in Maryland's Future","Wes Moore Interview: Education, Housing & the Economy","Official: Governor Moore Signs Historic Criminal Justice Reform","State of Maryland Address 2026 — Full Speech"],
+  TikTok:["POV: You're the Governor and you just signed the biggest climate bill in state history 🌱","Real talk with real Marylanders — what do YOU want?","Day in the life 🔥 #GovMoore #Maryland","This is what public service looks like. No fluff. Just work. 💪"]
+};
+const MENTION_ACCOUNTS=[
+  {handle:'@WBALNews',platform:'X',partisan:'center'},{handle:'@BaltimoreSD',platform:'Facebook',partisan:'left'},
+  {handle:'@MDRepublicans',platform:'X',partisan:'right'},{handle:'@CBSBaltimore',platform:'YouTube',partisan:'center'},
+  {handle:'@mdpoliticsnow',platform:'TikTok',partisan:'unknown'},{handle:'@AfroAmericaNews',platform:'Instagram',partisan:'left'},
+  {handle:'@NationalReview',platform:'X',partisan:'right'},{handle:'@GovWatchMD',platform:'Facebook',partisan:'center'},
+  {handle:'@ProgressiveMD',platform:'Instagram',partisan:'left'},{handle:'@MDConservative',platform:'TikTok',partisan:'right'},
+  {handle:'@WTOP',platform:'X',partisan:'center'},{handle:'r/maryland',platform:'Reddit',partisan:'unknown'},
+  {handle:'r/politics',platform:'Reddit',partisan:'left'},{handle:'@FoxNews',platform:'YouTube',partisan:'right'},
+  {handle:'@MSNBC',platform:'YouTube',partisan:'left'},{handle:'@CityPaperBmore',platform:'Instagram',partisan:'left'},
+];
+const MENTION_TEXTS=[
+  'Governor Moore announced the largest infrastructure investment in Maryland history.',
+  'Moore signs sweeping criminal justice reform — here\'s what changes.',
+  'Not everyone agrees with Governor Moore\'s new education funding formula.',
+  'Wes Moore makes his case for a second term — major statewide speech.',
+  'Breaking: Moore administration releases bold new climate action plan.',
+  'Governor Moore meets with union leaders amid budget standoff.',
+  'The Moore record: promises made vs. promises kept — a full accounting.',
+  'Moore\'s approval rating climbs to 62%, new poll shows.',
+  'Critics say Governor Moore\'s housing plan falls short of ambitious targets.',
+  'VIDEO: Wes Moore speaks at NAACP convention — standing ovation.',
+  'Thread: Everything about Westley Watande Moore\'s policy agenda.',
+  'Is Governor Moore positioning for a national run? Reading the signals.',
+  'Moore signs minimum wage increase — reactions from across Maryland.',
+  'Moore\'s education plan faces opposition in the state legislature.',
+  'Wes Moore on the economy: "Maryland is just getting started."',
+  'Federal funding secured for Maryland under Moore administration.',
+];
+const COMP_TEXTS=['Our vision for Maryland\'s next four years — a detailed policy plan.','Time to rethink Maryland\'s approach to public safety.','Major infrastructure funding secured — here\'s how it helps you.','Town hall recap: what voters across the state are saying.','Our commitment to Maryland small businesses starts here.','Breaking: Major endorsements announced ahead of election.','Here\'s where we stand on taxes and the state budget.','We\'re listening. Your priorities are our priorities.'];
+const TOPICS_NATIONAL=[
+  {topic:'Climate & Environment',platforms:['X','Instagram','TikTok'],vol:18400,eng:.034,sentiment:'positive',geo:'National'},
+  {topic:'Criminal Justice Reform',platforms:['Facebook','X','YouTube'],vol:14200,eng:.028,sentiment:'neutral',geo:'National'},
+  {topic:'Education Funding',platforms:['Facebook','Instagram','X'],vol:11800,eng:.021,sentiment:'neutral',geo:'National'},
+  {topic:'Housing Affordability',platforms:['TikTok','X','Reddit'],vol:9600,eng:.019,sentiment:'negative',geo:'National'},
+  {topic:'Infrastructure',platforms:['Facebook','YouTube','X'],vol:7300,eng:.016,sentiment:'positive',geo:'National'},
+];
+const TOPICS_MD=[
+  {topic:'Baltimore Development',platforms:['Instagram','TikTok','Facebook'],vol:7400,eng:.041,sentiment:'positive',geo:'Maryland'},
+  {topic:'MD Budget & Taxes',platforms:['X','Facebook','Reddit'],vol:5200,eng:.029,sentiment:'negative',geo:'Maryland'},
+  {topic:'Education Reform (MD)',platforms:['Facebook','X'],vol:4100,eng:.024,sentiment:'neutral',geo:'Maryland'},
+  {topic:'Chesapeake Bay',platforms:['Instagram','Facebook','YouTube'],vol:3300,eng:.022,sentiment:'positive',geo:'Maryland'},
+];
+
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function fmtN(n){if(!n||n===0)return'—';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return String(n);}
+function fmtPct(n){return(n*100).toFixed(2)+'%';}
+function daysAgo(d){const dt=new Date();dt.setDate(dt.getDate()-d);return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'});}
+function buildLabels(period){const cfg={y24h:{n:24,u:'h'},week:{n:7,u:'d'},month:{n:30,u:'d'},year:{n:12,u:'mo'}};const{n,u}=cfg[period]||cfg.week;return Array.from({length:n},(_,i)=>u==='h'?`${i+1}h`:`-${n-i}${u}`);}
+function platformTag(p){return`<span class="platform-tag ${PCLS[p]||''}">${p}</span>`;}
+function handleChip(h){return`<span class="handle-chip">${h}</span>`;}
+function multBadge(m){const cls=m>=5?'high':m>=2?'med':'low';return`<span class="mult-badge ${cls}">${m>=2?'▲':''}${m.toFixed(1)}×</span>`;}
+
+function makePost(handle,platform,dAgo,mult=1){
+  const followers=FOLLOWERS[handle]?.[platform]||rand(40000,200000);
+  const isVideo=platform==='YouTube'||platform==='TikTok'||(platform==='Instagram'&&Math.random()>.5);
+  let likes=0,comments=0,views=0,engRate,reach;
+  if(isVideo){views=Math.round(rand(Math.floor(followers*.03),Math.floor(followers*.55))*mult);engRate=views/followers;reach=Math.round(views*rand(110,175)/100);}
+  else{likes=Math.round(rand(Math.floor(followers*.002),Math.floor(followers*.04))*mult);comments=Math.round(rand(50,Math.max(51,Math.floor(likes*.18)))*mult);engRate=(likes+comments)/followers;reach=Math.round((likes+comments)*rand(8,20));}
+  const nonFol=rand(18,62)/100;
+  const texts=POST_TEXT[platform]||POST_TEXT.X;
+  const text=texts[rand(0,texts.length-1)];
+  const avgEng=.015;
+  const m=engRate/Math.max(avgEng,.001);
+  return{handle,platform,text,likes,comments,views,engRate,reach,nonFol,followers,isVideo,date:daysAgo(dAgo),dAgo,breakout:m>=3,mult:m,url:`https://${platform.toLowerCase()}.com/@${handle.replace('@','')}/posts/${rand(1000000,9999999)}`};
+}
+
+function generateOwnPosts(){
+  const daysMap={y24h:1,week:7,month:30,year:365};
+  const days=daysMap[S.period0]||7;
+  const posts=[];
+  const handles=S.handle0==='gov'?['@govwesmoore']:S.handle0==='iam'?['@iamwesmoore']:['@govwesmoore','@iamwesmoore'];
+  const plats=S.plat0==='all'?PLATFORMS:[S.plat0];
+  handles.forEach(h=>plats.forEach(p=>{
+    for(let i=0;i<rand(3,7);i++){
+      const m=Math.random()>.85?rand(3,8):Math.random()>.7?rand(1.5,2.9):1;
+      posts.push(makePost(h,p,rand(0,days),m));
+    }
+  }));
+  return posts.sort((a,b)=>b.engRate-a.engRate);
+}
+
+function generateMentions(){
+  const accts=S.plat1==='all'?MENTION_ACCOUNTS:MENTION_ACCOUNTS.filter(a=>a.platform===S.plat1);
+  return accts.map((acc,i)=>{
+    const isVideo=acc.platform==='YouTube'||acc.platform==='TikTok';
+    const followers=rand(5000,900000);
+    const mult=Math.random()>.75?rand(2,5):1;
+    let likes=0,comments=0,views=0,engRate,reach;
+    if(isVideo){views=rand(1000,Math.floor(followers*.45))*mult;engRate=views/followers;reach=Math.round(views*rand(110,160)/100);}
+    else{likes=rand(100,Math.floor(followers*.04))*mult;comments=rand(10,Math.max(11,Math.floor(likes*.2)))*mult;engRate=(likes+comments)/followers;reach=Math.round((likes+comments)*rand(8,18));}
+    const dAgo=rand(0,30);
+    return{...acc,followers,text:MENTION_TEXTS[i%MENTION_TEXTS.length],likes,comments,views,engRate,reach,sentiment:['positive','neutral','negative'][rand(0,2)],date:daysAgo(dAgo),dAgo,url:'#mention-'+i};
+  });
+}
+
+const CH={};
+function dc(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
+const CD={plugins:{legend:{labels:{color:'#92a9ec',font:{family:'Roboto',size:11},boxWidth:10,padding:14}}},scales:{x:{ticks:{color:'#7a85c0',font:{size:10}},grid:{color:'rgba(45,28,128,.5)'}},y:{ticks:{color:'#7a85c0',font:{size:10}},grid:{color:'rgba(45,28,128,.5)'}}}};
+
+function buildFollowerLineChart(){
+  dc('folLine');
+  const labels=buildLabels(S.period0);
+  const handles=S.handle0==='gov'?['@govwesmoore']:S.handle0==='iam'?['@iamwesmoore']:['@govwesmoore','@iamwesmoore'];
+  const ds=handles.map((h,i)=>({label:h,data:labels.map(()=>rand(200,5000)),borderColor:i===0?'#eca400':'#92a9ec',backgroundColor:i===0?'rgba(236,164,0,.08)':'rgba(146,169,236,.08)',tension:.4,fill:true,pointRadius:2,borderWidth:2}));
+  CH['folLine']=new Chart(document.getElementById('followerLineChart'),{type:'line',data:{labels,datasets:ds},options:{...CD}});
+}
+
+function buildFollowerBarChart(){
+  dc('folBar');
+  const plats=S.plat0==='all'?PLATFORMS:[S.plat0];
+  const handles=S.handle0==='gov'?['@govwesmoore']:S.handle0==='iam'?['@iamwesmoore']:['@govwesmoore','@iamwesmoore'];
+  const ds=handles.map((h,i)=>({label:h,data:plats.map(()=>rand(500,8000)),backgroundColor:i===0?'rgba(236,164,0,.85)':'rgba(146,169,236,.75)',borderColor:i===0?'#eca400':'#92a9ec',borderWidth:1,borderRadius:4}));
+  CH['folBar']=new Chart(document.getElementById('followerBarChart'),{type:'bar',data:{labels:plats,datasets:ds},options:{...CD}});
+}
+
+function buildEngLineChart(){
+  dc('engLine');
+  const labels=buildLabels(S.period0);
+  const ds=[{label:'Overall Engagement Rate',data:labels.map(()=>parseFloat((rand(8,38)/1000).toFixed(4))),borderColor:'#eca400',backgroundColor:'rgba(236,164,0,.08)',tension:.4,pointRadius:3,pointBackgroundColor:'#eca400',borderWidth:2.5,fill:true}];
+  CH['engLine']=new Chart(document.getElementById('engLineChart'),{type:'line',data:{labels,datasets:ds},options:{...CD,plugins:{...CD.plugins,legend:{display:false}},scales:{...CD.scales,y:{...CD.scales.y,ticks:{...CD.scales.y.ticks,callback:v=>(v*100).toFixed(2)+'%'}}}}});
+}
+
+function buildCompFollowerChart(){
+  dc('compFol');
+  const labels=buildLabels(S.period2);
+  const colors=['#eca400','#92a9ec','#2dd4a0','#495aee','#ff4f6a','#ff8c42','#06b6d4'];
+  const all=['Moore (Combined)',...S.competitors];
+  const ds=all.map((h,i)=>({label:h,data:labels.map(()=>rand(300,9000)*(i===0?2.2:1)),borderColor:colors[i%colors.length],backgroundColor:colors[i%colors.length]+'18',tension:.4,fill:i===0,pointRadius:2,borderWidth:i===0?2.5:1.5}));
+  CH['compFol']=new Chart(document.getElementById('compFollowerChart'),{type:'line',data:{labels,datasets:ds},options:{...CD}});
+}
+
+function buildMentionsLineChart(){
+  dc('mentLine');
+  const labels=buildLabels(S.period1);
+  const ds=[{label:'Total Mentions',data:labels.map(()=>rand(20,180)),borderColor:'#92a9ec',backgroundColor:'rgba(146,169,236,.1)',tension:.4,pointRadius:3,pointBackgroundColor:'#92a9ec',borderWidth:2.5,fill:true}];
+  CH['mentLine']=new Chart(document.getElementById('mentionsLineChart'),{type:'line',data:{labels,datasets:ds},options:{...CD,plugins:{...CD.plugins,legend:{display:false}}}});
+}
+
+function renderStatCards(posts){
+  const c=document.getElementById('statsRow0');c.innerHTML='';
+  const totalF=Object.values(FOLLOWERS).flatMap(h=>Object.values(h)).reduce((a,b)=>a+b,0);
+  const avgEng=posts.length?posts.reduce((a,b)=>a+b.engRate,0)/posts.length:0;
+  const breakouts=posts.filter(p=>p.breakout).length;
+  const topP=PLATFORMS.reduce((best,p)=>{const pp=posts.filter(q=>q.platform===p);const avg=pp.length?pp.reduce((a,b)=>a+b.engRate,0)/pp.length:0;return avg>(best.avg||0)?{p,avg}:best;},{});
+  [{label:'Total Followers',val:fmtN(totalF),change:'↑ 2.3%',dir:'up',sub:'All platforms combined'},
+   {label:'Avg Eng. Rate',val:fmtPct(avgEng),change:'↑ 0.4pp',dir:'up',sub:'Selected period & filters'},
+   {label:'Breakout Posts',val:breakouts,change:breakouts>0?'⚡ Active':'—',dir:breakouts>0?'up':'',sub:'≥ 3× avg engagement'},
+   {label:'Top Platform',val:topP.p||'—',change:topP.avg?fmtPct(topP.avg):'—',dir:'up',sub:'Highest avg eng. rate'},
+  ].forEach(d=>{
+    const el=document.createElement('div');el.className='stat-card';
+    el.innerHTML=`<div class="stat-label">${d.label}</div><div class="stat-value">${d.val}</div><div class="stat-change ${d.dir}">${d.change}</div><div class="stat-sub">${d.sub}</div>`;
+    c.appendChild(el);
+  });
+}
+
+function renderBestPosts(posts){
+  const tbody=document.getElementById('bestPostsBody');tbody.innerHTML='';
+  posts.slice(0,15).forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${platformTag(p.platform)}</td><td>${handleChip(p.handle)}</td><td><a class="post-link" href="${p.url}" target="_blank" title="${p.text}">${p.text.substring(0,55)}${p.text.length>55?'…':''}</a></td><td class="mono">${fmtN(p.reach)}</td><td class="mono">${(p.nonFol*100).toFixed(0)}%</td><td class="strong mono">${fmtPct(p.engRate)}</td><td>${p.date}</td><td>${multBadge(p.mult)}</td><td>${p.breakout?'<span class="breakout-badge">⚡ Breakout</span>':'<span class="normal-badge">Normal</span>'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderTopics(){
+  const tbody=document.getElementById('topicsBody');tbody.innerHTML='';
+  let topics=[...TOPICS_NATIONAL,...TOPICS_MD];
+  if(S.geo==='national')topics=TOPICS_NATIONAL;
+  if(S.geo==='maryland')topics=TOPICS_MD;
+  const maxVol=Math.max(...topics.map(t=>t.vol));
+  topics.slice(0,5).forEach((t,i)=>{
+    const barW=Math.max(6,Math.round(t.vol/maxVol*120));
+    const sc=t.sentiment==='positive'?'positive':t.sentiment==='negative'?'negative':'neutral';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="strong">${i+1}</td><td class="strong">${t.topic}</td><td>${t.platforms.map(p=>`<span class="platform-tag ${PCLS[p]}" style="margin:1px">${p}</span>`).join('')}</td><td class="mono">${fmtN(t.vol)}</td><td class="strong mono">${fmtPct(t.eng)}</td><td><span class="sentiment-tag ${sc}">${t.sentiment}</span></td><td><span class="topic-geo">${t.geo==='Maryland'?'🦀 Maryland':'🇺🇸 National'}</span></td><td><div style="display:flex;align-items:center;gap:6px"><div style="height:5px;border-radius:3px;background:var(--accent);width:${barW}px"></div><span style="font-family:'Roboto',monospace;font-size:.67rem;color:var(--text3)">${fmtN(t.vol)}</span></div></td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('geoSubLabel').textContent=`${S.geo==='all'?'National + Maryland':S.geo==='national'?'National only':'Maryland only'} · ${S.period1t==='24h'?'Past 24h':S.period1t==='week'?'Past week':'Past month'}`;
+}
+
+function renderMentions(mentions){
+  const filtered=S.partisan==='all'?mentions:mentions.filter(m=>m.partisan===S.partisan);
+  const byEng=[...filtered].sort((a,b)=>b.engRate-a.engRate);
+  const engBody=document.getElementById('mentionsByEngBody');engBody.innerHTML='';
+  byEng.slice(0,12).forEach(m=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${platformTag(m.platform)}</td><td>${handleChip(m.handle)}</td><td><a class="post-link" href="#" target="_blank" title="${m.text}">${m.text.substring(0,58)}${m.text.length>58?'…':''}</a></td><td class="mono">${fmtN(m.reach)}</td><td class="strong mono">${fmtPct(m.engRate)}</td><td><span class="partisan-tag ${m.partisan}">${m.partisan.charAt(0).toUpperCase()+m.partisan.slice(1)}</span></td><td><span class="sentiment-tag ${m.sentiment}">${m.sentiment}</span></td><td>${m.date}</td>`;
+    engBody.appendChild(tr);
+  });
+  const byDate=[...filtered].sort((a,b)=>a.dAgo-b.dAgo);
+  const dateBody=document.getElementById('mentionsByDateBody');dateBody.innerHTML='';
+  byDate.slice(0,12).forEach(m=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${platformTag(m.platform)}</td><td>${handleChip(m.handle)}</td><td><a class="post-link" href="#" target="_blank" title="${m.text}">${m.text.substring(0,58)}${m.text.length>58?'…':''}</a></td><td class="strong mono">${fmtPct(m.engRate)}</td><td><span class="partisan-tag ${m.partisan}">${m.partisan.charAt(0).toUpperCase()+m.partisan.slice(1)}</span></td><td><span class="sentiment-tag ${m.sentiment}">${m.sentiment}</span></td><td>${m.date}</td>`;
+    dateBody.appendChild(tr);
+  });
+  document.getElementById('partisanSubLabel').textContent=`Newest first · ${S.partisan==='all'?'All partisan leans':'Lean = '+S.partisan.charAt(0).toUpperCase()+S.partisan.slice(1)}`;
+}
+
+function renderCompTopics(){
+  const tbody=document.getElementById('compTopicsBody');tbody.innerHTML='';
+  if(!S.competitors.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:2rem">Add competitor handles above to see topic trends.</td></tr>';return;}
+  const topics=['Education','Public Safety','Economy','Housing','Infrastructure','Environment','Healthcare'];
+  S.competitors.forEach(comp=>{
+    topics.slice(0,rand(2,4)).forEach(topic=>{
+      const eng=rand(8,42)/1000;const vol=rand(20,400);const plats=PLATFORMS.slice(0,rand(2,4));const traction=eng>.025;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${handleChip(comp)}</td><td class="strong">${topic}</td><td>${plats.map(p=>`<span class="platform-tag ${PCLS[p]}" style="margin:1px">${p}</span>`).join('')}</td><td class="mono">${fmtN(vol)}</td><td class="strong mono">${fmtPct(eng)}</td><td>${traction?'<span class="breakout-badge">📈 Yes</span>':'<span class="normal-badge">Low</span>'}</td><td><div style="height:5px;border-radius:3px;background:${traction?'var(--orange)':'var(--border2)'};width:${Math.round(eng*3000)}px"></div></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+function renderCompTopPosts(){
+  const tbody=document.getElementById('compTopPostsBody');tbody.innerHTML='';
+  if(!S.competitors.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">Add competitor handles above to see their top posts.</td></tr>';return;}
+  const plats=S.plat2==='all'?PLATFORMS:[S.plat2];
+  const posts=[];
+  S.competitors.forEach(comp=>{
+    plats.forEach(p=>{
+      const isVideo=p==='YouTube'||p==='TikTok';const followers=rand(50000,600000);const mult=Math.random()>.7?rand(2,6):1;
+      let views=0,likes=0,comments=0,engRate,reach;
+      if(isVideo){views=rand(5000,Math.floor(followers*.45))*mult;engRate=views/followers;reach=Math.round(views*rand(110,160)/100);}
+      else{likes=rand(500,Math.floor(followers*.04))*mult;comments=rand(50,Math.max(51,Math.floor(likes*.15)))*mult;engRate=(likes+comments)/followers;reach=Math.round((likes+comments)*rand(8,18));}
+      const nonFol=rand(20,65)/100;const m=engRate/.015;
+      posts.push({comp,platform:p,text:COMP_TEXTS[rand(0,COMP_TEXTS.length-1)],engRate,reach,nonFol,mult:m,breakout:m>=3,date:daysAgo(rand(0,30)),url:`https://${p.toLowerCase()}.com/@${comp.replace('@','')}/posts/${rand(1000000,9999999)}`});
+    });
+  });
+  posts.sort((a,b)=>b.engRate-a.engRate).slice(0,15).forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${platformTag(p.platform)}</td><td>${handleChip(p.comp)}</td><td><a class="post-link" href="${p.url}" target="_blank" title="${p.text}">${p.text.substring(0,55)}${p.text.length>55?'…':''}</a></td><td class="mono">${fmtN(p.reach)}</td><td class="mono">${(p.nonFol*100).toFixed(0)}%</td><td class="strong mono">${fmtPct(p.engRate)}</td><td>${p.date}</td><td>${multBadge(p.mult)}</td><td>${p.breakout?'<span class="breakout-badge">⚡ Breakout</span>':'<span class="normal-badge">Normal</span>'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function populateAlerts(){
+  const list=document.getElementById('alertList');
+  [{platform:'TikTok',handle:'@iamwesmoore',text:'New video hitting 12× avg — climate bill signing.',metric:'8.2% eng. rate (avg 0.6%)',time:'4 min ago'},
+   {platform:'X',handle:'@govwesmoore',text:'Tweet on criminal justice reform trending in MD.',metric:'Velocity: 2.3K eng/hr',time:'22 min ago'},
+   {platform:'Instagram',handle:'@larryhogan',text:'Competitor post gaining rapid traction statewide.',metric:'6.1% eng. rate (avg 1.0%)',time:'1h ago'},
+   {platform:'YouTube',handle:'@CBSBaltimore',text:'Moore mention in viral news segment.',metric:'Views: 180K in 3 hours',time:'2h ago'},
+  ].forEach(a=>{
+    const el=document.createElement('div');el.className='alert-item';
+    el.innerHTML=`<div class="alert-item-head"><span class="alert-item-platform" style="color:${PCOLOR[a.platform]}">${a.platform} · ${a.handle}</span><span class="alert-item-time">${a.time}</span></div><div class="alert-item-text">${a.text}</div><div class="alert-item-metric">⚡ ${a.metric}</div>`;
+    list.appendChild(el);
+  });
+}
+
+function setF(btn){
+  const key=btn.dataset.key,val=btn.dataset.val;
+  S[key]=val;
+  btn.closest('.filter-group').querySelectorAll(`.filter-btn[data-key="${key}"]`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(['period0','handle0','plat0'].includes(key))refreshTab0();
+  if(['period1','plat1','partisan'].includes(key)){window._mentions=generateMentions();renderMentions(window._mentions);buildMentionsLineChart();}
+  if(['geo','period1t'].includes(key))renderTopics();
+  if(['period2','plat2'].includes(key))refreshTab2();
+}
+
+function switchTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.page').forEach((p,j)=>p.classList.toggle('active',i===j));
+}
+function toggleAlerts(){S.alertOpen=!S.alertOpen;document.getElementById('alertPanel').classList.toggle('open',S.alertOpen);}
+function saveAlertConfig(){const e=document.getElementById('alertEmail').value;if(e)alert('✓ Alerts configured for '+e);else alert('Enter an email address first.');}
+function addCompetitor(){let v=document.getElementById('competitorInput').value.trim();if(!v)return;if(!v.startsWith('@'))v='@'+v;if(!S.competitors.includes(v)){S.competitors.push(v);renderCompetitorChips();refreshTab2();}document.getElementById('competitorInput').value='';}
+function removeCompetitor(h){S.competitors=S.competitors.filter(c=>c!==h);renderCompetitorChips();refreshTab2();}
+function renderCompetitorChips(){document.getElementById('competitorChips').innerHTML=S.competitors.map(h=>`<div class="competitor-chip">${h}<button onclick="removeCompetitor('${h}')" title="Remove">×</button></div>`).join('');}
+
+function refreshTab0(){const posts=generateOwnPosts();renderStatCards(posts);buildFollowerLineChart();buildFollowerBarChart();buildEngLineChart();renderBestPosts(posts);}
+function refreshTab1(){window._mentions=generateMentions();renderTopics();buildMentionsLineChart();renderMentions(window._mentions);}
+function refreshTab2(){buildCompFollowerChart();renderCompTopics();renderCompTopPosts();}
+
+function initDashboard(){renderCompetitorChips();refreshTab0();refreshTab1();refreshTab2();populateAlerts();}
+</script>
+</body>
+</html>
